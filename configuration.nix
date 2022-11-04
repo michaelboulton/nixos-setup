@@ -227,6 +227,11 @@
   system.autoUpgrade.channel = https://nixos.org/channels/nixos-22.05;
   system.autoUpgrade.allowReboot = false;
   
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  boot.extraModprobeConfig = ''
+    options hid_apple fnmode=2
+  '';
+  
   # Remove useless gnome packages
   environment.gnome.excludePackages = (with pkgs; [
     gnome-photos
