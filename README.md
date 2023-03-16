@@ -52,11 +52,6 @@ Before starting:
         sync
         zpool export -a
 
-1. Set swap device as actual swap
-
-   1. `mkswap <swap-partition>`
-   2. Add swap device to hardware-configuration.nix `swapDevices = [ { device = "/<swap-partition>"; } ];`
-
 ## Post installation/reboot
 
 ### Keys
