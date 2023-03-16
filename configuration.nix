@@ -4,22 +4,30 @@
 
 { config, pkgs, ... }:
 
+let
+  vimpackages = import ./vim-packages.nix {
+    vimrc = (builtins.readFile /home/michael/.dotfiles/other/nix-vimrc);
+    pkgs = pkgs;
+  };
+in
+
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
       # intellij and gnome extension from specific version
-      ./unstable-packages.nix
+      #./unstable-packages.nix
       # vim config / vimrc
-      ./vim.nix
+      #./vim.nix
       # Generated during setup for zfs
       ./zfs.nix
       # Uncomment/modify to enable nvidia drivers/prime
       # ./nvidia-offload.nix
       # uncomment/modify to enable falcon scanner
       # ./falcon.nix
-      # Fixes keychrom keys
-      ./keychron.nix
+      # Fixes keychrom keys <- fixed by udev rule below
+      #./keychron.nix
     ];
 
   boot.kernel.sysctl = {
@@ -27,17 +35,17 @@
   };
 
   environment.sessionVariables = rec {
-       SDL_VIDEODRIVER = "wayland";
-       QT_QPA_PLATFORM = "wayland";
-       _JAVA_AWT_WM_NONREPARENTING = "1";
-       NIXOS_OZONE_WL = "1";
-       MOZ_ENABLE_WAYLAND = "1";
+    SDL_VIDEODRIVER = "wayland";
+    QT_QPA_PLATFORM = "wayland";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
+    NIXOS_OZONE_WL = "1";
+    MOZ_ENABLE_WAYLAND = "1";
 
-       GDK_BACKEND = "wayland,x11";
+    GDK_BACKEND = "wayland,x11";
 
-       XDG_BIN_HOME    = "\${HOME}/.local/bin";
-       XDG_DATA_HOME   = "\${HOME}/.local/share";
-   };
+    XDG_BIN_HOME = "\${HOME}/.local/bin";
+    XDG_DATA_HOME = "\${HOME}/.local/share";
+  };
 
   hardware.bluetooth.enable = true;
 
@@ -67,14 +75,14 @@
   services.xserver.displayManager.gdm.enable = true;
   programs.dconf.enable = true;
   services.xserver.desktopManager.gnome = {
-   enable = true;
+    enable = true;
 
-   # Enable fractional scaling
-   extraGSettingsOverrides = ''
-     [org.gnome.mutter]
-     experimental-features=['scale-monitor-framebuffer']
-   '';
-   extraGSettingsOverridePackages = with pkgs.gnome; [ mutter ];
+    # Enable fractional scaling
+    extraGSettingsOverrides = ''
+      [org.gnome.mutter]
+      experimental-features=['scale-monitor-framebuffer']
+    '';
+    extraGSettingsOverridePackages = with pkgs.gnome; [ mutter ];
   };
 
   # Configure keymap in X11
@@ -160,9 +168,11 @@
       nodejs-16_x
       rustup
 
-      bazelisk
+      jetbrains.idea-ultimate
+      gnomeExtensions.vertical-workspaces
+
       maven
-      #go_1_18 # Use gvm?
+      go_1_19
       golangci-lint
       google-cloud-sdk
       kubectl
@@ -171,7 +181,7 @@
       bazel-buildtools
       sublime3
 
-      (python310.withPackages(ps: [
+      (python310.withPackages (ps: [
         ps.mypy
         ps.isort
         ps.black
@@ -179,7 +189,7 @@
       ]))
 
       gcc
-    ];
+    ] ++ vimpackages;
 
   };
 
@@ -221,17 +231,17 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "22.05"; # Did you read the comment?
+  system.stateVersion = "22.11"; # Did you read the comment?
 
   system.autoUpgrade.enable = false;
-  system.autoUpgrade.channel = https://nixos.org/channels/nixos-22.05;
+  system.autoUpgrade.channel = https://nixos.org/channels/nixos-22.11;
   system.autoUpgrade.allowReboot = false;
-  
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   boot.extraModprobeConfig = ''
     options hid_apple fnmode=2
   '';
-  
+
   # Remove useless gnome packages
   environment.gnome.excludePackages = (with pkgs; [
     gnome-photos

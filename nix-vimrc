@@ -1,0 +1,721 @@
+scriptencoding utf-8 " utf-8 all the way
+set encoding=utf-8
+
+set ssop-=options    " do not store global and local values in a session
+set ssop-=folds      " do not store folds
+
+let s:editor_root=expand("~/.config/nvim-nix")
+
+" change leader key to , from backslash
+let mapleader = ","
+
+let g:AutoPairsCenterLine = 0
+
+set timeout timeoutlen=500
+
+""""""""""""""""""""
+" deoplete
+"let g:deoplete#enable_at_startup = 1
+"call deoplete#custom#option('smart_case', v:true)
+" <TAB>: completion.
+"inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+
+"inoremap <expr><TAB>  coc#pum#visible() ? "\<C-n>" : "\<TAB>"
+"inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+"                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+if has('nvim-0.4.0') || has('patch-8.2.0750')
+  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+endif
+
+nnoremap <silent><C-\><C-\> <Cmd>exe v:count1 . 'ToggleTerm'<CR>
+tnoremap <silent><C-\><C-\> <Cmd>exe v:count1 . 'ToggleTerm'<CR>
+
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+"nmap <leader>f <Cmd>CocCommand explorer --position floating --floating-position center --sources file+ --open-action-strategy sourceWindow --floating-width -50 --floating-height -50 --root-strategies=workspace,keep<CR>
+
+" fern
+map <leader>e<C-x> :Fern %:h -opener=split  -reveal=%<CR>
+map <leader>e<C-v> :Fern %:h -opener=vsplit -reveal=%<CR>
+map <leader>e<C-t> :Fern %:h -opener=tabedit -reveal=%<CR>
+map <leader>e<CR> :Fern %:h  -opener=edit -reveal=%<CR>
+command Ex execute 'Fern %:h -opener=edit -reveal=%<CR>'
+
+function! s:fern_settings() abort
+  nmap <silent> <buffer> <C-p> <Plug>(fern-action-preview:auto:toggle)
+
+  nmap <silent><buffer> + <Plug>(fern-action-expand)
+
+  nmap <buffer><expr>
+          \ <Plug>(fern-my-open-or-expand-or-collapse)
+          \ fern#smart#leaf(
+          \   "<Plug>(fern-action-open)",
+          \   "<Plug>(fern-action-expand)",
+          \   "<Plug>(fern-action-collapse)",
+          \ )
+
+  nmap <silent> <buffer> <CR> <Plug>(fern-my-open-or-expand-or-collapse)
+endfunction
+
+augroup fern-settings
+  autocmd!
+  autocmd FileType fern call s:fern_settings()
+  autocmd FileType fern nnoremap <buffer> <leader>f :close<CR>
+  autocmd FileType fern nnoremap <buffer> <Esc> :close<CR>
+augroup END
+
+
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('<K>', 'in')
+  endif
+endfunction
+nnoremap <silent> <K> :call ShowDocumentation()<CR>
+
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+inoremap <silent><expr> <S-TAB>
+      \ pumvisible() ? "\<C-p>" :
+      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#refresh()
+
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" language server
+set hidden
+
+" highlighting
+hi link ALEError Error
+hi Warning term=underline cterm=underline ctermfg=Yellow gui=undercurl guisp=Gold
+hi link ALEWarning Warning
+hi link ALEInfo SpellCap
+""""""""""""""""""""
+
+let g:airline#extensions#tabline#formatter = 'unique_tail'
+
+"let g:airline#extensions#tabline#left_sep = "\uE0Bc"
+"let g:airline#extensions#tabline#left_alt_sep = "\ue0b8"
+"let g:airline#extensions#tabline#right_sep = "<"
+"let g:airline#extensions#tabline#right_alt_sep = "\ue0be"
+
+let g:airline_theme='base16_gruvbox_dark_hard'
+
+set autoindent
+set showmatch
+
+let g:fern#renderer = "nerdfont"
+augroup my-glyph-palette
+  autocmd! *
+  autocmd FileType fern call glyph_palette#apply()
+  autocmd FileType nerdtree,startify call glyph_palette#apply()
+augroup END
+
+" Nerdtree
+if exists(":NERDTree")
+    autocmd vimenter * NERDTree
+    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
+    " NERDTress File highlighting
+    function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
+        exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
+        exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
+    endfunction
+
+    call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
+    call NERDTreeHighlightFile('ini', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('md', 'blue', 'none', '#3366FF', '#151515')
+    call NERDTreeHighlightFile('yml', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('config', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('conf', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('json', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('html', 'yellow', 'none', 'yellow', '#151515')
+    call NERDTreeHighlightFile('styl', 'cyan', 'none', 'cyan', '#151515')
+    call NERDTreeHighlightFile('css', 'cyan', 'none', 'cyan', '#151515')
+    call NERDTreeHighlightFile('coffee', 'Red', 'none', 'red', '#151515')
+    call NERDTreeHighlightFile('js', 'Red', 'none', '#ffa500', '#151515')
+    call NERDTreeHighlightFile('php', 'Magenta', 'none', '#ff00ff', '#151515')
+endif
+
+
+let g:UltiSnipsExpandTrigger = '<C-j>'
+let g:UltiSnipsJumpForwardTrigger = '<C-j>'
+let g:UltiSnipsJumpBackwardTrigger = '<C-k>'
+
+hi Folded ctermbg=8 ctermfg=blue
+hi FoldColumn ctermbg=darkgrey ctermfg=white
+
+hi Search ctermbg=yellow ctermfg=black
+
+"popup menu
+hi Pmenu ctermbg=white
+hi Pmenusel ctermbg=yellow
+
+" need tabs in makefile
+autocmd bufnewfile,bufread,Filetype make set noexpandtab
+
+let g:vim_tags_auto_generate = 1
+let g:vim_tags_directories = ["."]
+
+" FIXME
+"map <leader>c  :TagsGenerate!<CR>
+map <leader>t  :Files<CR>
+map <leader>T  :Tags<CR>
+map <leader>b  :Buffers<CR>
+map <leader>h  :History<CR>
+map <leader>g  :GFiles<CR>
+
+map <leader>l  :BLines<CR>
+map <leader>L  :RG<CR>
+
+let g:peekaboo_window = 'vert bo 50new'
+
+" undotree
+if has("persistent_undo")
+   let target_path = expand('~/.cache/undodir')
+
+    " create the directory and any parent directories
+    " if the location does not exist.
+    if !isdirectory(target_path)
+        call mkdir(target_path, "p", 0700)
+    endif
+
+    let &undodir=target_path
+    set undofile
+endif
+map <leader>u  :UndotreeToggle<CR>
+"let g:undotree_DiffCommand = "delta --true-color=never"
+let g:undotree_DiffCommand = "patdiff -ascii -context 5 -location-style none -alt-old old -alt-new new"
+let g:undotree_WindowLayout = 2
+let g:undotree_DiffpanelHeight = 20
+
+"auto syntax on :Style
+command Style %!astyle --style=ansi --align-pointer=middle --add-brackets --break-blocks
+
+"autocmd BufWinEnter * normal zM
+"autocmd BufWinEnter * normal zR
+
+"spellcheck on ctrl-l
+map <Esc>[s1z=
+
+"autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
+
+" Uncomment the following to have Vim jump to the last position when
+" reopening a file
+if has("autocmd")
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
+
+" refresh diff
+autocmd BufWritePost * if &diff == 1 | diffupdate | endif
+
+"let g:rainbow_conf = {
+"    \	'guifgs': ['darkyellow', 'darkorange3', 'seagreen3', 'firebrick'],
+"    \    }
+"let g:rainbow_active = 1
+
+" format as json with =j
+nmap =j :%!python -m json.tool<CR>
+
+set termguicolors
+colorscheme gruvbox
+
+" Note: Neovim ignores t_Co and other terminal codes.
+" set t_Co=256
+
+" always draw column for gitgutter
+set signcolumn=yes
+
+" Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
+" delays and poor user experience.
+set updatetime=300
+
+if has('nvim')
+  inoremap <silent><expr> <c-space> coc#refresh()
+else
+  inoremap <silent><expr> <c-@> coc#refresh()
+endif
+
+" interactive mouse
+set mouse=a
+
+function! RipgrepFzf(query, fullscreen)
+  let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case -- %s || true'
+  let initial_command = printf(command_fmt, shellescape(a:query))
+  let reload_command = printf(command_fmt, '{q}')
+  let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command]}
+  call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
+endfunction
+
+command! -nargs=* -bang RG call RipgrepFzf(<q-args>, <bang>0)
+
+let g:formatdef_nix_format = '"nixpkgs-fmt"'
+let g:formatdef_my_custom_nix = '"nixpkgs-fmt"'
+let g:formatters_nix = ['my_custom_nix']
+
+let g:formatdef_clojure_format = '"zprint"'
+let g:formatdef_my_custom_clojure = '"zprint"'
+let g:formatters_clojure = ['my_custom_clojure']
+
+let g:formatdef_fennel_format = '"fnlfmt -"'
+let g:formatdef_my_custom_fennel = '"fnlfmt -"'
+let g:formatters_fennel = ['my_custom_fennel']
+
+let g:airline#extensions#tabline#show_buffers = 0
+
+noremap <C-M-l> :Autoformat<CR>
+
+set laststatus=2
+set backspace=2
+
+" types
+set wildignore+=*.lo
+set wildignore+=*.pyc
+set wildignore+=*.o
+set wildignore+=*.a
+set wildignore+=*.npz
+set wildignore+=*.so
+set wildignore+=*.pdf
+set wildignore+=*.ps
+set wildignore+=*.eps
+set wildignore+=*.dvi
+set wildignore+=*.gz
+set wildignore+=*.bz2
+set wildignore+=*.zip
+
+" folders
+set wildignore+=.git
+set wildignore+=*.eggs/**
+set wildignore+=*.egg-info/**
+set wildignore+=**/node_modules/**
+set wildignore+=**/build/lib.linux-x86_64-*
+set wildignore+=**/node_modules
+set wildignore+=**/.svn
+set wildignore+=**/.idea
+set wildignore+=**/__pycache__
+
+set diffopt+=vertical
+
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr()
+
+set foldlevel=1
+set nofoldenable
+set foldnestmax=10
+
+set hlsearch
+
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set softtabstop=4
+"set background=dark
+
+"autocmd Filetype tex set tabstop=2 shiftwidth=2 softtabstop=2
+
+"syntax on
+set showtabline=2
+set number
+set ruler
+
+set noswapfile
+set ignorecase
+set smartcase
+set incsearch
+let g:is_posix = 1
+
+set backspace=indent
+set backspace+=eol
+set backspace+=start
+set cinoptions+=L0
+
+"map <F6> :e \| :! `pdflatex *.tex && bibtex *.aux && makeglossaries *.glo && pdflatex *.tex` <CR><CR>
+"map <F7> :e \| :! latex *.tex && dvips -Ppdf *.dvi && ps2pdf *.ps <CR><CR>
+"map <F3> :e \| :w !detex \| wc -w<CR>
+
+"C++11
+let c_no_curly_error=1
+
+" turn off stupid auto indenting
+set autoindent
+set nocindent
+set nosmartindent
+
+filetype indent off
+filetype plugin indent off
+
+autocmd BufNewFile,BufRead requirements.txt set ft=cfg
+
+autocmd BufNewFile,BufRead *.json set ft=javascript
+"autocmd BufNewFile,BufRead *.tex set tw=130
+autocmd BufNewFile,BufRead *.tex set spell spelllang=en_gb
+autocmd BufNewFile,BufRead *.cl set ft=c
+autocmd BufNewFile,BufRead *.cuknl set ft=cuda
+autocmd BufNewFile,BufRead interfaces set ft=interfaces
+autocmd BufNewFile,BufRead Rockerfile set ft=dockerfile
+autocmd BufNewFile,BufRead *.Rockerfile set ft=dockerfile
+autocmd BufNewFile,BufRead *.rockerfile set ft=dockerfile
+autocmd BufNewFile,BufRead *.dockerfile set ft=dockerfile
+autocmd BufNewFile,BufRead *.Dockerfile set ft=dockerfile
+autocmd BufNewFile,BufRead Dockerfile.* set ft=dockerfile
+autocmd BufNewFile,BufRead BUILD.bazel set ft=bzl
+
+autocmd BufNewFile,BufRead *.conf set ft=conf
+
+autocmd BufNewFile,BufRead iptables.* set ft=iptables
+
+autocmd BufNewFile,BufRead *.chpl set ft=chpl
+autocmd BufNewFile,BufRead sw-description set ft=lua
+"autocmd BufNewFile,BufRead *.py set ft=pyopencl
+
+autocmd BufNewFile,BufRead iptables.* set ft=iptables
+
+autocmd BufNewFile,BufRead *.its set ft=dts
+autocmd BufNewFile,BufRead *.socket set ft=systemd
+
+autocmd BufNewFile,BufRead .pylintrc set ft=cfg
+
+map <localleader>cp :ConjureConnect 8794<CR>
+function! AutoConjureSelect()
+  let shadow_build=system("ps aux | grep 'shadow-cljs watch' | head -1 | sed -E 's/.*?shadow-cljs watch //' | tr -d '\n'")
+  let cmd='ConjureShadowSelect ' . shadow_build
+  execute cmd
+endfunction
+command! AutoConjureSelect call AutoConjureSelect()
+"autocmd BufReadPost *.cljs :AutoConjureSelect
+"autocmd BufReadPost *.clj :ConjureConnect 8794
+
+
+map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
+
+let g:go_highlight_structs = 1 
+let g:go_highlight_methods = 1
+let g:go_highlight_functions = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_build_constraints = 1
+
+lua << EOF
+    parser_install_dir = "/home/michael/.cache/treesitter/parsers"
+
+    vim.opt.runtimepath:append(parser_install_dir)
+    vim.fn.mkdir(parser_install_dir, "p")
+
+    local exists, _ = pcall(require,"nvim-treesitter-configs")
+    if exists then
+    require'nvim-treesitter.configs'.setup {
+        indent = {
+            enable = true
+        },
+        parser_install_dir = parser_install_dir,
+        ensure_installed = "all",
+        sync_install = false,
+        auto_install = false,
+        highlight = {
+            enable = true,
+            additional_vim_regex_highlighting = false,
+        },
+
+        rainbow = {
+            enable = true,
+            extended_mode = true,
+            max_file_lines = nil,
+            -- colors = {}, -- table of hex strings
+            -- termcolors = {} -- table of colour name strings
+        }
+    }
+
+    local exists, nta = pcall(require,"nvim-ts-autotag")
+    if exists then
+        nta.setup()
+    end
+    end
+
+    local wk = require("which-key")
+    wk.setup({ })
+    
+    wk.register({
+      c = {
+        name = "Clojure connections",
+        p = { "Connect to port 8794 on REPL" },
+        f = { "Clojure connect using .nrepl-port file" },
+        d = { "Clojure disconnect" },
+      },
+      e = {
+        name = "Conjure evaluate",
+        e = { "Evaluate current form" },
+        r = { "Evaluate root form" },
+        f = { "Evaluate whole file" },
+        b = { "Evaluate whole buffer" },
+      },
+      l = {
+        name = "Conjure log",
+        e = { "Open log in window" },
+        g = {  "Toggle log" },
+        l = {  "Jump to latest" },
+        q = {  "Close visible log" },
+        R = {  "Reset log [hard]" },
+        r = {  "Reset log" },
+        s = {  "Log in horizontal split" },
+        v = {  "Log in vertical split" },
+        t = {  "Log in new tab" },
+      },
+      t = {
+        name = "Conjure tests",
+        a = { "Run all tests" },
+        c = { "Run selected test" },
+        n = { "Run current namespace tests" },
+        N = { "Run alternate namespace tests" },
+      }
+    }, {
+        prefix = "<localleader>",
+    })
+
+    wk.register({
+        e = {
+            name = "open file tree",
+            ["<C-v>"] = { "in vertical split" },
+            ["<C-x>"] = { "in horizontal split" },
+            ["<C-t>"] = { "in new tab" },
+            ["<CR>"] = { "in this split" },
+        } 
+    }, { prefix = "<leader>" })
+
+    wk.register({
+        s = {
+            name = "surrounds",
+            f = { "Delete surroundings of form" }
+        } 
+    }, { prefix = "d" })
+
+    wk.register({
+        d = { "Go to definition" },
+        y = { "Go to type definition" },
+        i = { "Go to implementations" },
+        r = { "Go to references" },
+    }, { prefix = "g", mode = "n", })
+
+    -- cse(/cse)/cseb: surround element in parentheses
+    -- cse[/cse]: surround element in brackets
+    -- cse{/cse}: surround element in braces
+    wk.register({
+        s = {
+            name = "surrounds",
+            e = {
+                name = "surround element in",
+                ["{"] = { "Surround element in curly braces" },
+                ["}"] = { "Surround element in curly braces" },
+
+                ["["] = { "Surround element in brackets" },
+                ["]"] = { "Surround element in brackets" },
+
+                ["("] = { "Surround element in parentheses" },
+                [")"] = { "Surround element in parentheses" },
+                ["b"] = { "Surround element in parentheses" },
+            },
+        }, 
+    }, { prefix = "c" })
+
+    wk.register({
+        I = "Insert at end of form",
+        [")"] = "capture next element",
+        ["("] = "emit head element",
+        f = "Swap list forward",
+        e = "swap element forward"
+    }, { prefix = ">" })
+
+    wk.register({
+        I = "Insert at beginning of form",
+        [")"] = "capture previous element",
+        ["("] = "emit tail element",
+        f = "Swap list backward",
+        e = "swap element backward"
+    }, { prefix = "<lt>" })
+
+    wk.register({
+        a = {
+            name = "around",
+            f = "current form",
+            F = "top level form",
+            s = "current string",
+            e = "current element",
+        },
+    }, { prefix = "y" })
+
+    require("toggleterm").setup({
+        -- direction = 'float',
+        -- float_opts = {
+        --     border =  'curved' ,
+        --     height = function(term)
+        --         return math.floor(vim.o.lines*0.4)
+        --     end,
+        -- },
+    })
+
+    local npairs = require('nvim-autopairs')
+    npairs.setup({
+        -- disable_filetype = { "TelescopePrompt" }
+        -- disable_in_macro = false  -- disable when recording or executing a macro
+        -- disable_in_visualblock = false -- disable when insert after visual block mode
+        -- disable_in_replace_mode = true
+        -- ignored_next_char = [=[[%w%%%'%[%"%.]]=]
+        -- enable_moveright = true
+        -- enable_afterquote = true  -- add bracket pairs after quote
+        -- enable_check_bracket_line = true  --- check bracket in same line
+        -- enable_bracket_in_quote = true --
+        -- enable_abbr = false -- trigger abbreviation
+        -- break_undo = true -- switch for basic rule break undo sequence
+        -- check_ts = false
+        map_cr = true
+        -- map_bs = true  -- map the <BS> key
+        -- map_c_h = false  -- Map the <C-h> key to delete a pair
+        -- map_c_w = false -- map <c-w> to delete a pair if possible
+    })
+    npairs.get_rule("'")[1].not_filetypes = { "scheme", "lisp", "fennel", "" }
+
+    _G.MUtils= {}
+
+    MUtils.completion_confirm=function()
+        if vim.fn["pumvisible"]() ~= 0 then
+            return vim.fn["coc#_select_confirm"]()
+        else
+            return npairs.autopairs_cr()
+        end
+    end
+
+    local remap = vim.api.nvim_set_keymap
+    remap('i' , '<CR>','v:lua.MUtils.completion_confirm()', {expr = true , noremap = true})
+
+
+    require('auto-session').setup({
+      -- log_level = 'info',
+      -- auto_session_enable_last_session = false,
+      -- auto_session_root_dir = vim.fn.stdpath('data').."/sessions/",
+      -- auto_session_enabled = true,
+      -- auto_save_enabled = nil,
+      -- auto_restore_enabled = nil,
+      -- auto_session_suppress_dirs = nil,
+      -- auto_session_use_git_branch = nil,
+      -- -- the configs below are lua only
+      -- bypass_session_save_file_types = nil
+    })
+
+EOF
+
+hi rainbowcol1 guifg=#fbf1c7
+hi rainbowcol2 guifg=#98971a
+hi rainbowcol3 guifg=#d79921
+hi rainbowcol4 guifg=#458588
+hi rainbowcol5 guifg=#b16286
+hi rainbowcol6 guifg=#689d6a
+hi rainbowcol7 guifg=#7c6f64
+
+let g:airline#extensions#tabline#enabled = 1
+
+
+" Disable mapping hooks
+"let g:sexp_filetypes = ''
+"let g:sexp_enable_insert_mode_mappings = 0
+"
+"function! s:vim_sexp_mappings()
+"    xmap <silent><buffer> af              <Plug>(sexp_outer_list)
+"    omap <silent><buffer> af              <Plug>(sexp_outer_list)
+"    xmap <silent><buffer> if              <Plug>(sexp_inner_list)
+"    omap <silent><buffer> if              <Plug>(sexp_inner_list)
+"    xmap <silent><buffer> aF              <Plug>(sexp_outer_top_list)
+"    omap <silent><buffer> aF              <Plug>(sexp_outer_top_list)
+"    xmap <silent><buffer> iF              <Plug>(sexp_inner_top_list)
+"    omap <silent><buffer> iF              <Plug>(sexp_inner_top_list)
+"    xmap <silent><buffer> as              <Plug>(sexp_outer_string)
+"    omap <silent><buffer> as              <Plug>(sexp_outer_string)
+"    xmap <silent><buffer> is              <Plug>(sexp_inner_string)
+"    omap <silent><buffer> is              <Plug>(sexp_inner_string)
+"    xmap <silent><buffer> ae              <Plug>(sexp_outer_element)
+"    omap <silent><buffer> ae              <Plug>(sexp_outer_element)
+"    xmap <silent><buffer> ie              <Plug>(sexp_inner_element)
+"    omap <silent><buffer> ie              <Plug>(sexp_inner_element)
+"    nmap <silent><buffer> (               <Plug>(sexp_move_to_prev_bracket)
+"    xmap <silent><buffer> (               <Plug>(sexp_move_to_prev_bracket)
+"    omap <silent><buffer> (               <Plug>(sexp_move_to_prev_bracket)
+"    nmap <silent><buffer> )               <Plug>(sexp_move_to_next_bracket)
+"    xmap <silent><buffer> )               <Plug>(sexp_move_to_next_bracket)
+"    omap <silent><buffer> )               <Plug>(sexp_move_to_next_bracket)
+"    nmap <silent><buffer> [[              <Plug>(sexp_move_to_prev_top_element)
+"    xmap <silent><buffer> [[              <Plug>(sexp_move_to_prev_top_element)
+"    omap <silent><buffer> [[              <Plug>(sexp_move_to_prev_top_element)
+"    nmap <silent><buffer> ]]              <Plug>(sexp_move_to_next_top_element)
+"    xmap <silent><buffer> ]]              <Plug>(sexp_move_to_next_top_element)
+"    omap <silent><buffer> ]]              <Plug>(sexp_move_to_next_top_element)
+"    nmap <silent><buffer> [e              <Plug>(sexp_select_prev_element)
+"    xmap <silent><buffer> [e              <Plug>(sexp_select_prev_element)
+"    omap <silent><buffer> [e              <Plug>(sexp_select_prev_element)
+"    nmap <silent><buffer> ]e              <Plug>(sexp_select_next_element)
+"    xmap <silent><buffer> ]e              <Plug>(sexp_select_next_element)
+"    omap <silent><buffer> ]e              <Plug>(sexp_select_next_element)
+"    nmap <silent><buffer> ==              <Plug>(sexp_indent)
+"    nmap <silent><buffer> =-              <Plug>(sexp_indent_top)
+"    nmap <silent><buffer> <LocalLeader>i  <Plug>(sexp_round_head_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>i  <Plug>(sexp_round_head_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>I  <Plug>(sexp_round_tail_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>I  <Plug>(sexp_round_tail_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>[  <Plug>(sexp_square_head_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>[  <Plug>(sexp_square_head_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>]  <Plug>(sexp_square_tail_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>]  <Plug>(sexp_square_tail_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>{  <Plug>(sexp_curly_head_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>{  <Plug>(sexp_curly_head_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>}  <Plug>(sexp_curly_tail_wrap_list)
+"    xmap <silent><buffer> <LocalLeader>}  <Plug>(sexp_curly_tail_wrap_list)
+"    nmap <silent><buffer> <LocalLeader>w  <Plug>(sexp_round_head_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>w  <Plug>(sexp_round_head_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>W  <Plug>(sexp_round_tail_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>W  <Plug>(sexp_round_tail_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>e[ <Plug>(sexp_square_head_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>e[ <Plug>(sexp_square_head_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>e] <Plug>(sexp_square_tail_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>e] <Plug>(sexp_square_tail_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>e{ <Plug>(sexp_curly_head_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>e{ <Plug>(sexp_curly_head_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>e} <Plug>(sexp_curly_tail_wrap_element)
+"    xmap <silent><buffer> <LocalLeader>e} <Plug>(sexp_curly_tail_wrap_element)
+"    nmap <silent><buffer> <LocalLeader>h  <Plug>(sexp_insert_at_list_head)
+"    nmap <silent><buffer> <LocalLeader>l  <Plug>(sexp_insert_at_list_tail)
+"    nmap <silent><buffer> <LocalLeader>@  <Plug>(sexp_splice_list)
+"    nmap <silent><buffer> <LocalLeader>o  <Plug>(sexp_raise_list)
+"    xmap <silent><buffer> <LocalLeader>o  <Plug>(sexp_raise_list)
+"    nmap <silent><buffer> <LocalLeader>O  <Plug>(sexp_raise_element)
+"    xmap <silent><buffer> <LocalLeader>O  <Plug>(sexp_raise_element)
+"
+"    " Handled by autopair
+"    "imap <silent><buffer> <BS>            <Plug>(sexp_insert_backspace)
+"    "imap <silent><buffer> "               <Plug>(sexp_insert_double_quote)
+"    "imap <silent><buffer> (               <Plug>(sexp_insert_opening_round)
+"    "imap <silent><buffer> )               <Plug>(sexp_insert_closing_round)
+"    "imap <silent><buffer> [               <Plug>(sexp_insert_opening_square)
+"    "imap <silent><buffer> ]               <Plug>(sexp_insert_closing_square)
+"    "imap <silent><buffer> {               <Plug>(sexp_insert_opening_curly)
+"    "imap <silent><buffer> }               <Plug>(sexp_insert_closing_curly)
+"endfunction
+"
+"augroup VIM_SEXP_MAPPING
+"    autocmd!
+"    autocmd FileType clojure,scheme,lisp,timl call s:vim_sexp_mappings()
+"augroup END
