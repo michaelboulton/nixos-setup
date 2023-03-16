@@ -36,6 +36,8 @@ Before starting:
 
         rsync -av /path/to/repo/*.nix /mnt/etc/nixos/
 
+1. Optional: If not using nvidia, you might want to disable wayland https://search.nixos.org/options?channel=22.11&show=services.xserver.displayManager.gdm.wayland&from=0&size=50&sort=relevance&type=packages&query=gdm
+
 1. Run nixos install command as specified in the zfs installation instructions
 
    this might take ~20 minutes
