@@ -24,6 +24,8 @@ Before starting:
 
 1. Copy paste all the instructions after setting the appropriate disk paths UNTIL setting the root password
 
+   **NOTE**: If it tries to write anything into configuration.nix, change that to write into machine.nix
+
    Do not pass the 'mirror' options when creating the pools
 
    If this fails due to pool errors (eg, if you tried this before), do `zpool import -f <pool>` then `zpool destroy <pool>`
